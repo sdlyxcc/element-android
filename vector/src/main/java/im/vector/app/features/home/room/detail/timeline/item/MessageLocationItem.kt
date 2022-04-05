@@ -35,7 +35,10 @@ import im.vector.app.core.utils.DimensionConverter
 import im.vector.app.features.home.room.detail.timeline.helper.LocationPinProvider
 import im.vector.app.features.home.room.detail.timeline.style.TimelineMessageLayout
 import im.vector.app.features.home.room.detail.timeline.style.granularRoundedCorners
+import im.vector.app.features.location.live.LocationLiveMessageBannerView
+import im.vector.app.features.location.live.LocationLiveMessageBannerViewState
 
+// TODO should we create a dedicated item for live location?
 @EpoxyModelClass(layout = R.layout.item_timeline_event_base)
 abstract class MessageLocationItem : AbsMessageItem<MessageLocationItem.Holder>() {
 
@@ -59,10 +62,10 @@ abstract class MessageLocationItem : AbsMessageItem<MessageLocationItem.Holder>(
         renderSendState(holder.view, null)
         val location = locationUrl ?: return
         val messageLayout = attributes.informationData.messageLayout
-        val dimensionConverter = DimensionConverter(holder.view.resources)
         val imageCornerTransformation = if (messageLayout is TimelineMessageLayout.Bubble) {
             messageLayout.cornersRadius.granularRoundedCorners()
         } else {
+            val dimensionConverter = DimensionConverter(holder.view.resources)
             RoundedCorners(dimensionConverter.dpToPx(8))
         }
         holder.staticMapImageView.updateLayoutParams {
@@ -87,6 +90,7 @@ abstract class MessageLocationItem : AbsMessageItem<MessageLocationItem.Holder>(
                                                  target: Target<Drawable>?,
                                                  dataSource: DataSource?,
                                                  isFirstResource: Boolean): Boolean {
+                        // TODO check if the avatar pin is correct when no photo for user
                         locationPinProvider?.create(userId) { pinDrawable ->
                             GlideApp.with(holder.staticMapPinImageView)
                                     .load(pinDrawable)
@@ -98,6 +102,34 @@ abstract class MessageLocationItem : AbsMessageItem<MessageLocationItem.Holder>(
                 })
                 .transform(imageCornerTransformation)
                 .into(holder.staticMapImageView)
+
+        updateLocationLiveBanner(holder)
+    }
+
+    private fun updateLocationLiveBanner(holder: Holder) {
+        val messageLayout = attributes.informationData.messageLayout
+        val viewState = if (messageLayout is TimelineMessageLayout.Bubble) {
+            LocationLiveMessageBannerViewState(
+                    isStopButtonVisible = true,
+                    remainingTimeInMillis = 4000 * 1000L,
+                    bottomStartCornerRadiusInDp = messageLayout.cornersRadius.bottomStartRadius,
+                    bottomEndCornerRadiusInDp = messageLayout.cornersRadius.bottomEndRadius,
+            )
+        } else {
+            val dimensionConverter = DimensionConverter(holder.view.resources)
+            val cornerRadius = dimensionConverter.dpToPx(8).toFloat()
+            LocationLiveMessageBannerViewState(
+                    isStopButtonVisible = true,
+                    remainingTimeInMillis = 4000 * 1000L,
+                    bottomStartCornerRadiusInDp = cornerRadius,
+                    bottomEndCornerRadiusInDp = cornerRadius,
+            )
+        }
+        holder.locationLiveMessageBanner.isVisible = true
+        holder.locationLiveMessageBanner.render(viewState)
+
+        // TODO ask if UI changes needed for Bubble mode
+        // TODO confirm the view on receiver side
     }
 
     override fun getViewStubId() = STUB_ID
@@ -106,6 +138,7 @@ abstract class MessageLocationItem : AbsMessageItem<MessageLocationItem.Holder>(
         val staticMapImageView by bind<ImageView>(R.id.staticMapImageView)
         val staticMapPinImageView by bind<ImageView>(R.id.staticMapPinImageView)
         val staticMapErrorTextView by bind<TextView>(R.id.staticMapErrorTextView)
+        val locationLiveMessageBanner by bind<LocationLiveMessageBannerView>(R.id.locationLiveMessageBanner)
     }
 
     companion object {

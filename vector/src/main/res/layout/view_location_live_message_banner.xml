@@ -6,15 +6,16 @@
     android:layout_height="wrap_content"
     tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
 
-    <View
+    <ImageView
         android:id="@+id/locationLiveMessageBannerBackground"
         android:layout_width="0dp"
         android:layout_height="48dp"
         android:alpha="0.85"
-        android:background="?colorSurface"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:background="?colorSurface"
+        tools:ignore="ContentDescription" />
 
     <ImageView
         android:id="@+id/locationLiveMessageBannerIcon"
